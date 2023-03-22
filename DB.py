@@ -80,7 +80,7 @@ def addToDB(cnx, info, username): #Adds all songs, attributes, and artists to th
     count = 0 # Track progress
     for index, song in frame.iterrows():
         insertArtist(song["artist"], cnx) # Put artist in the artists table
-        artID = int(getID(song["artist"], cnx))
+        artID = int(get_aID(song["artist"], cnx))
         # Get all info for the track in one place
         recordTuple = (song["track"], song["id"], round(song["danceability"], 9), round(song["energy"], 9),
                     song["key"], round(song["loudness"], 9), song["mode"], round(song["speechiness"], 9),
@@ -95,7 +95,7 @@ def addToDB(cnx, info, username): #Adds all songs, attributes, and artists to th
             sys.stdout.write(str(count) + '\n')
             sys.stdout.flush()
 
-def insertArtist(value, cnx):  # Inserts the artist info into the artists table
+def insertArtist(value, cnx):  # Inserts the artist info into the artists table, ignoring duplicates
     try:
         insert_query = "INSERT IGNORE INTO artist (artist_name) VALUES ('" + value + "');" # SQL insert command
         cursor = cnx.cursor()
@@ -108,7 +108,7 @@ def insertArtist(value, cnx):  # Inserts the artist info into the artists table
         if(err[1] != 'Duplicate'):
             print("Failed to insert record into artist table {}".format(error))
 
-def insertTrack(values, cnx):  # Inserts the track info into the tracks table
+def insertTrack(values, cnx):  # Inserts the track info into the tracks table, ignoring duplicates
     try:
         # SQL insert query (%s is a place holder for a value to be specified later)
         insert_query = """INSERT IGNORE INTO track (track_name, spotify_id, danceability, energy, 
@@ -125,7 +125,7 @@ def insertTrack(values, cnx):  # Inserts the track info into the tracks table
         if(err[1] != 'Duplicate'):
             print("Failed to insert record into track table {}".format(error))
 
-def insertFav(values, cnx):
+def insertFav(values, cnx):  # Associates tracks with the user who likes them
     try:
         # SQL insert query (%s is a place holder for a value to be specified later)
         insert_query = "INSERT INTO favorites (user_name, track_id) VALUES (%s, %s);"
@@ -139,7 +139,7 @@ def insertFav(values, cnx):
         if(err[1] != 'Duplicate'):
             print("Failed to insert record into favorites table {}".format(error))
 
-def getID(name, cnx):  # Gets the artist ID in order to link songs to them in the tracks table
+def get_aID(name, cnx):  # Gets the artist ID in order to link songs to them in the tracks table
     try:
         cursor = cnx.cursor(buffered=True)
         sql_select_query = "select artist_id from artist where artist_name = '" + name + "';" # SQL command to get the id for an artist
@@ -150,7 +150,7 @@ def getID(name, cnx):  # Gets the artist ID in order to link songs to them in th
     except mysql.connector.Error as error:
         print("Failed to get record from MySQL table: {}".format(error))
 
-def get_tID(sid, cnx):
+def get_tID(sid, cnx):  # Gets the track ID
     try:
         cursor = cnx.cursor(buffered=True)
         sql_select_query = "select track_id from track where spotify_id = '" + sid + "';" # SQL command to get the id for an artist
@@ -161,7 +161,7 @@ def get_tID(sid, cnx):
     except mysql.connector.Error as error:
         print("Failed to get record from MySQL table: {}".format(error))
 
-def checkFav(username, tid, cnx):
+def checkFav(username, tid, cnx):  # Verifies if a track is already associated with a user
     try:
         cursor = cnx.cursor(buffered=True)
         sql_select_query = "select track_id from favorites where track_id = %s AND user_name = %s;" # SQL command to get the id for an artist
@@ -174,7 +174,7 @@ def checkFav(username, tid, cnx):
     except mysql.connector.Error as error:
         print("Failed to get record from MySQL table: {}".format(error))
 
-def getUsers(cnx):
+def getUsers(cnx):  # Gets a list of Users
     users = []
     try:
         # If the user already exists, return the Users_id
@@ -191,23 +191,23 @@ def getUsers(cnx):
     except mysql.connector.Error as error:
         print("Failed to get record from MySQL user table: {}".format(error))
 
-def getPass(cnx, username, passwrd):
+def getPass(cnx, username, passwrd): # Checks if password entered and password stored in DB Match 
     try:
         # If the user already exists, return the Users_id
         cursor = cnx.cursor(buffered=True)
-        sql_select_query = "select user_pass from user Where user_name = '" + username + "';" # SQL command to get the song_num for a song
+        sql_select_query = "select user_pass from user where user_name = '" + username + "';" # SQL command to get the song_num for a song
         cursor.execute(sql_select_query) # Run the command
         record = cursor.fetchall() # Get all results of the query
-        if record == None or record == []:
+        if record == None or record == []: # If the password saved in DB is blank or empty
             return False
-        if record[0][0] == passwrd:
+        if record[0][0] == passwrd: # If passwords match
             return True
         return False
 
     except mysql.connector.Error as error:
         print("Failed to get record from MySQL user table: {}".format(error))
 
-def addUser(cnx, values):
+def addUser(cnx, values): # Adds new User account to DB
     try:
         insert_query = "INSERT INTO user (user_name, user_pass) VALUES (%s, %s);" # SQL insert command
         cursor = cnx.cursor()
@@ -219,7 +219,7 @@ def addUser(cnx, values):
         if(err[1] != 'Duplicate'):
             print("Failed to insert record into user table {}".format(error))
 
-def getSongs(cnx, username, limit, mood):
+def getSongs(cnx, username, limit, mood): # Gets a list of songs that satisfy the mood and playlist size limit
     songs = []
     try:
         cursor = cnx.cursor(buffered=True)
@@ -251,7 +251,7 @@ def getSongs(cnx, username, limit, mood):
     except mysql.connector.Error as error:
         print("Failed to get record from MySQL user table: {}".format(error))
 
-def insertSpot(cnx, sname, username):
+def insertSpot(cnx, sname, username): # Adds user's spotify username to the user's entry
     try:
         insert_query = "UPDATE user SET spotify_name = %s WHERE user_name = %s;" # SQL insert command
         cursor = cnx.cursor()
@@ -264,7 +264,7 @@ def insertSpot(cnx, sname, username):
         if(err[1] != 'Duplicate'):
             print("Failed to insert record into user table {}".format(error))
 
-def getSpot(cnx, username):
+def getSpot(cnx, username): # Gets user's spotify name
     try:
         cursor = cnx.cursor(buffered=True)
         sql_select_query = "select spotify_name from user WHERE user_name = '" + str(username) + "';" # SQL command to get the song_num for a song
@@ -278,7 +278,7 @@ def getSpot(cnx, username):
     except mysql.connector.Error as error:
         print("Failed to get record from MySQL user table: {}".format(error)) 
 
-def getPid(cnx, col, username):
+def getPid(cnx, col, username): # Gets the playlist ID for the playlist we will be saving to as to not infinitely generate playlists. Returns None if there is no playlist associated with the mood
     try:
         cursor = cnx.cursor(buffered=True)
         sql_select_query = "select " + col + " from user WHERE user_name = '" + username + "';" # SQL command to get the song_num for a song
@@ -292,7 +292,7 @@ def getPid(cnx, col, username):
     except mysql.connector.Error as error:
         print("Failed to get record from MySQL user table: {}".format(error))
 
-def insertPid(cnx, pId, col, user):
+def insertPid(cnx, pId, col, user): # Adds the playlist ID for the Playlist that was generated as to keep track of it
     try:
         insert_query = "UPDATE user SET " + col + " = %s WHERE user_name = %s;" # SQL insert command
         cursor = cnx.cursor()
