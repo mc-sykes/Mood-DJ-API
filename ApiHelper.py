@@ -6,8 +6,8 @@ def check():
     #time.sleep(10)
     print("What's up!")
     
-def getToken(code, name, ip):
-    result = subprocess.run(['curl -H "Authorization: Basic MWM1YjQ5NWVkMzY0NGI0Yjk0ZDdiNzFjNjEzNTY0ZTg6OTY2YTk2ZmM3NWEyNDk1N2IwMDJjZTU4YjRlNzg1Nzg=" -d grant_type=authorization_code -d code=' + code + ' -d redirect_uri=http://'+ip+':5000/api/push_button https://accounts.spotify.com/api/token'], shell=True, stdout=subprocess.PIPE)
+def getToken(code, name, ip): # Gets a Spotify Token user to access user's accounts
+    result = subprocess.run(['curl -H "Authorization: Basic *Secret Key*=" -d grant_type=authorization_code -d code=' + code + ' -d redirect_uri=http://'+ip+':5000/api/push_button https://accounts.spotify.com/api/token'], shell=True, stdout=subprocess.PIPE)
     
     output = result.stdout.decode('utf-8')
     output = json.loads(output)
@@ -25,8 +25,8 @@ def getToken(code, name, ip):
     print(output2)
     return output2['display_name']
     
-def refresh(rToken):
-    result = subprocess.run(['curl -H "Authorization: Basic MWM1YjQ5NWVkMzY0NGI0Yjk0ZDdiNzFjNjEzNTY0ZTg6OTY2YTk2ZmM3NWEyNDk1N2IwMDJjZTU4YjRlNzg1Nzg=" -d grant_type=refresh_token -d refresh_token='
+def refresh(rToken): # Refresh token access
+    result = subprocess.run(['curl -H "Authorization: Basic *Secret Key*=" -d grant_type=refresh_token -d refresh_token='
                               + rToken + ' https://accounts.spotify.com/api/token'], shell=True, stdout=subprocess.PIPE)
     output = result.stdout.decode('utf-8')
     output = json.loads(output)
