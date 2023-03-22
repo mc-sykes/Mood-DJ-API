@@ -1,3 +1,5 @@
+#Flask server that will handle all requests from the User interface (App or Browser). Acts as middle man between user and server
+
 import flask
 import ApiHelper as helper
 import DB
@@ -5,39 +7,35 @@ import pickle
 import spotipy
 import random
 
-app = flask.Flask(__name__)
-app.config["DEBUG"] = True
-somberAway = '172.16.51.193'
-bigAway = '192.168.137.48'
-home = '0.0.0.0'
-ip = bigAway
+application = flask.Flask(__name__)
+ip = '192.168.137.48'
 scopes = 'user-library-read playlist-modify-private playlist-modify-public user-read-email user-read-private'
 
 redirect = 'http://'+ip+':5000/api/push_button'
 config = {
     'user': 'api',
-    'password': '8Vnuxc3$',
+    'password': '',
     'host': '127.0.0.1', # IP address unless database is on local machine, then 127.0.0.1
     'database': 'mood_dj', # database name
     'port': '7983',
     'raise_on_warnings': True
     }
 
-@app.route('/', methods=['GET', 'POST'])
+@application.route('/', methods=['GET', 'POST'])  # Home page, needed by Flask
 def home():
     return"<h1>Hello World!<h1>"
 
-@app.route('/api/print', methods=['GET', 'POST'])
+@application.route('/api/print', methods=['GET', 'POST'])  # Test
 def api_print():
     helper.check()
     return 'Printed'
 
-@app.route('/api/push_button', methods=['GET', 'POST'])
-def api_pushbutton():
+@application.route('/api/push_button', methods=['GET', 'POST']) 
+def api_pushbutton(): # Helper function for browser within app on mobile device
     return "<h1>Press the check button to continue and then retry the desired action<h1>"
 
-@app.route('/api/login', methods=['GET', 'POST'])
-def api_login():
+@application.route('/api/login', methods=['GET', 'POST'])
+def api_login(): # Takes input from mobile application/website and verifies login credentials
     arguments = flask.request.args
     name = arguments['name']
     passwd = arguments['passwd']
@@ -48,8 +46,8 @@ def api_login():
     else:
         return 'Bad'
 
-@app.route('/api/create_account', methods=['GET', 'POST'])
-def api_createAccount():
+@application.route('/api/create_account', methods=['GET', 'POST'])
+def api_createAccount(): # Takes input from mobile application/website and creates user account
     arguments = flask.request.args
     name = arguments['name']
     passwd = arguments['passwd']
@@ -61,8 +59,8 @@ def api_createAccount():
         DB.addUser(cnx, (name, passwd))
     return 'Good'
 
-@app.route('/api/authorizehelper', methods=['GET', 'POST'])
-def api_authorizehelper():
+@application.route('/api/authorizehelper', methods=['GET', 'POST'])
+def api_authorizehelper(): # Generate a token to handle spotify requests
     arguments = flask.request.args
     code = arguments['code']
     name = arguments['name']
@@ -71,8 +69,8 @@ def api_authorizehelper():
     DB.insertSpot(cnx, displayName, name)
     return 'Token_Created' # may have to also return a string to close the webview
 
-@app.route('/api/check_for_token', methods=['GET', 'POST'])
-def api_checkForToken():
+@application.route('/api/check_for_token', methods=['GET', 'POST'])
+def api_checkForToken(): # Check for a token to handle spotify requests
     arguments = flask.request.args
     name = arguments['name']
     try:
@@ -88,8 +86,8 @@ def api_checkForToken():
     return 'Get_Songs'
      # Return a string saying that we need to open webview at this address
 
-@app.route('/api/getSongs', methods=['GET', 'POST'])
-def api_getSongs():
+@application.route('/api/getSongs', methods=['GET', 'POST'])
+def api_getSongs(): # Once request is sent from application/website calls DB function to pull songs
     arguments = flask.request.args
     name = arguments['name']
     try:
@@ -112,8 +110,8 @@ def api_getSongs():
     DB.addToDB(cnx, info, name)
     return 'Done' # Return string saying everything went according to plan
 
-@app.route('/api/create_playlist', methods=['GET', 'POST'])
-def api_createPlaylist():
+@application.route('/api/create_playlist', methods=['GET', 'POST'])
+def api_createPlaylist(): # Once request is sent from application/website calls DB function to generate a playlist and send it back to application/website
     arguments = flask.request.args
     mood = arguments['mood']
     limit = arguments['limit']
@@ -126,8 +124,8 @@ def api_createPlaylist():
     selected = random.sample(info, limit)
     return flask.jsonify(selected)
 
-@app.route('/api/add_to_spotify', methods=['GET', 'POST'])
-def api_addToSpotify():
+@application.route('/api/add_to_spotify', methods=['GET', 'POST'])
+def api_addToSpotify():  #Once request is sent from application/website calls DB function to save playlist to Spotify account
     arguments = flask.request.args
     name = arguments['user']
     mood = arguments['mood']
@@ -142,7 +140,7 @@ def api_addToSpotify():
     
     ids =[]
     for i in data:
-        ids.append(i['id'])
+        ids.applicationend(i['id'])
     print(ids)
     sName = DB.getSpot(cnx, name)
     pId = DB.getPid(cnx, mood+'_id', name)
@@ -158,4 +156,4 @@ def api_addToSpotify():
     return 'Done'
     
 
-app.run(host='0.0.0.0')
+application.run(host='0.0.0.0')
